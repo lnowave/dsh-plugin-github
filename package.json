@@ -1,0 +1,34 @@
+{
+  "name": "@local/dsh-github",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Authenticated GitHub REST access, including private repositories, through model tools and a Plugins-page settings card.",
+  "icon": "./icon.svg",
+  "type": "module",
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./package.json": "./package.json",
+    "./locale/*.json": "./locale/*.json"
+  },
+  "files": [
+    "index.js",
+    "client.js",
+    "cordis.patch.yml",
+    "icon.svg",
+    "locale/*.json"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": [
+        "@deepseek-ai/dsh-client-locale",
+        "@deepseek-ai/dsh-api-remotes"
+      ]
+    }
+  }
+}

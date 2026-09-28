@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "GitHub private repositories",
+    "description": "Read and write private repositories with a Personal Access Token, through github_* tools."
+  }
+}

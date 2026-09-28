@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="GitHub">
+  <rect width="64" height="64" rx="14" fill="#24292f"/>
+  <g fill="none" stroke="#ffffff" stroke-width="3.6" stroke-linecap="round">
+    <path d="M23 17v22" />
+    <path d="M23 27c0 6.5 5 9 11 9h5" />
+  </g>
+  <circle cx="23" cy="14.5" r="5.4" fill="#ffffff" />
+  <circle cx="42" cy="36" r="5.4" fill="#ffffff" />
+  <circle cx="23" cy="45.5" r="5.4" fill="#ffffff" />
+</svg>

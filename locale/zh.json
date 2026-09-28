@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "GitHub 私人仓库",
+    "description": "用 Personal Access Token 读写私有仓库，提供 github_* 系列工具。"
+  }
+}
