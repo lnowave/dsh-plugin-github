@@ -30,6 +30,7 @@ window.__ModuleLoader__.load({
 				save: 'Save token',
 				saving: 'Saving…',
 				saved: 'Token saved. It is verified on the next github_* tool call.',
+				notStored: 'The save call resolved, but the credential is still unconfigured:',
 				empty: 'Paste a token first.',
 				clear: 'Remove token',
 				cleared: 'Token removed.',
@@ -46,6 +47,7 @@ window.__ModuleLoader__.load({
 				save: '保存 token',
 				saving: '保存中…',
 				saved: 'token 已保存，下次调用 github_* 工具时生效并验证。',
+				notStored: '保存调用返回成功，但凭据仍未配置：',
 				empty: '请先粘贴 token。',
 				clear: '移除 token',
 				cleared: 'token 已移除。',
@@ -70,11 +72,10 @@ window.__ModuleLoader__.load({
 		}
 
 		return {
-			inject: ['slots'],
+			inject: ['slots', 'remote', 'remote.credentials'],
 			apply(ctx) {
 				const slots = readService(ctx, 'slots')
 				if (slots === undefined) return
-				const remote = readService(ctx, 'remote')
 				const locale = readService(ctx, 'locale')
 
 				let t = (key) => COPY.zh[key] ?? key
@@ -83,8 +84,22 @@ window.__ModuleLoader__.load({
 					t = locale.bind(NS)
 				}
 
-				/** The credential remote face, when this page exposes one. */
+				/**
+				 * The credential remote face. Looked up on every use: a bundle can be
+				 * applied before the remotes module reaches the active state, and a
+				 * value captured in `apply` would stay undefined for the page's life.
+				 */
+				const remoteService = () => {
+					try {
+						const remote = ctx.remote
+						if (remote !== undefined) return remote
+					} catch {
+						/* fall through */
+					}
+					return readService(ctx, 'remote')
+				}
 				const credentials = () => {
+					const remote = remoteService()
 					if (remote === undefined) return undefined
 					try {
 						return remote.credentials
@@ -130,6 +145,7 @@ window.__ModuleLoader__.load({
 					}, [read])
 
 					React.useEffect(() => {
+						const remote = remoteService()
 						if (remote === undefined || typeof remote.$on !== 'function') return undefined
 						const off = remote.$on('credentials/reference-updated', (ref) => {
 							if (ref === TOKEN_REF) read()
@@ -153,10 +169,23 @@ window.__ModuleLoader__.load({
 						setBusy(true)
 						setStatus('')
 						Promise.resolve(creds.set(TOKEN_REF, next))
-							.then(() => {
-								setValue('')
-								setStatus(t('saved'))
-								read()
+							.then((res) => {
+								if (res !== undefined && res !== null && res.ok === false) {
+									setStatus(String(res.error && res.error.message ? res.error.message : JSON.stringify(res)))
+									return undefined
+								}
+								return Promise.resolve(creds.describe([TOKEN_REF])).then((check) => {
+									const info = check && check.value ? check.value[TOKEN_REF] : undefined
+									if (info && info.configured) {
+										setValue('')
+										setStatus(t('saved'))
+										read()
+										return
+									}
+									// The write resolved but nothing is stored: keep the reason visible
+									// instead of reporting success the provider never confirmed.
+									setStatus(`${t('notStored')} ${JSON.stringify(check)}`)
+								})
 							})
 							.catch((error) => setStatus(String((error && error.message) || error)))
 							.finally(() => setBusy(false))
@@ -168,7 +197,11 @@ window.__ModuleLoader__.load({
 						setBusy(true)
 						setStatus('')
 						Promise.resolve(creds.unset(TOKEN_REF))
-							.then(() => {
+							.then((res) => {
+								if (res !== undefined && res !== null && res.ok === false) {
+									setStatus(String(res.error && res.error.message ? res.error.message : JSON.stringify(res)))
+									return
+								}
 								setStatus(t('cleared'))
 								read()
 							})
